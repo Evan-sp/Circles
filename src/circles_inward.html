@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D3.js Circle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body class="min-h-screen bg-stone-800">
+    <div id="visualization" class="flex justify-center items-center h-screen">
+    </div>
+
+    <script>
+        // Set up the SVG container
+        const width = 800;
+        const height = 600;
+        
+        const svg = d3.select("#visualization")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            //.style("background", "#1c1917")
+            .style("background", "none")
+            .style("border-radius", "8px");
+        
+        // Number of circles to create
+        const circleCount = 10;
+
+        // Create array of data for the circles
+        const circleData = Array.from({ length: circleCount }, (_, i) => ({
+            id: i,
+            x: width/2 + (Math.random() - 0.5) * 100,  // Random initial positions
+            y: height/2 + (Math.random() - 0.5) * 100,
+            radius: Math.random() * 20 + 20  // Random radius between 20 and 40
+        }));
+
+        // Create the force simulation
+        const simulation = d3.forceSimulation(circleData)
+            .force("charge", d3.forceManyBody().strength(30))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("collision", d3.forceCollide().radius(d => d.radius + 7)) // Use individual circle radius
+            //.velocityDecay(0.3) // Reduce velocity decay to make movement more bouncy
+            .on("tick", ticked);
+
+        // Create circles using data join
+        const circles = svg.selectAll("circle")
+            .data(circleData)
+            .join("circle")
+            .attr("r", d => d.radius)
+            .style("fill", "#1c1917")
+            .style("stroke", "#44403c")
+            .style("stroke-width", 2)
+            .style("stroke-dasharray", "0")
+            .each(function(d) {
+                // Add a second border as a separate circle element
+                svg.append("circle")
+                    .attr("r", d.radius + 5)
+                    .attr("cx", d.x)
+                    .attr("cy", d.y)
+                    .style("fill", "#1e1b16")
+                    .style("stroke", "black")
+                    .style("stroke-width", 4)
+                    .style("opacity", 0.6)
+                    .attr("class", "outer-border-" + d.id);
+            });
+
+        // Update circle positions on each tick of the simulation
+        // Configurable padding constant for collision boundaries
+        const boundaryPadding = 20;
+        
+        function ticked() {
+            circles
+                .attr("cx", d => {
+                    // Bounce off left and right edges with padding
+                    if (d.x <= d.radius + boundaryPadding) {
+                        d.x = d.radius + boundaryPadding;
+                        d.vx *= -0.8; // Reverse velocity with some dampening
+                    }
+                    if (d.x >= width - (d.radius + boundaryPadding)) {
+                        d.x = width - (d.radius + boundaryPadding);
+                        d.vx *= -0.8;
+                    }
+                    return d.x;
+                })
+                .attr("cy", d => {
+                    // Bounce off top and bottom edges with padding
+                    if (d.y <= d.radius + boundaryPadding) {
+                        d.y = d.radius + boundaryPadding;
+                        d.vy *= -0.8;
+                    }
+                    if (d.y >= height - (d.radius + boundaryPadding)) {
+                        d.y = height - (d.radius + boundaryPadding);
+                        d.vy *= -0.8;
+                    }
+                    return d.y;
+                });
+                
+            // Update the outer borders position
+            circleData.forEach(d => {
+                svg.select(".outer-border-" + d.id)
+                    .attr("cx", d.x)
+                    .attr("cy", d.y);
+            });
+        }
+    </script>
+</body>
+</html>

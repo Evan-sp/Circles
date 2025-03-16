@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D3.js Circle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        :root {
+            --background-color: #1c1917;
+            --circle-fill: #1e1e1e;
+            --circle-stroke: #292524;
+            --outer-border-fill: #44403c;
+            --outer-border-stroke: #57534e;
+        }
+        
+        body {
+            background-color: var(--background-color);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div id="visualization" class="flex justify-center items-center h-screen">
+    </div>
+
+    <script>
+        // Set up the SVG container
+        const width = 800;
+        const height = 600;
+        
+        // Get colors from CSS variables
+        const getColor = (varName) => {
+            return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+        };
+        
+        // Color palette from CSS variables
+        const colors = {
+            background: getColor('--background-color'),
+            circleFill: getColor('--circle-fill'),
+            circleStroke: getColor('--circle-stroke'),
+            outerBorderFill: getColor('--outer-border-fill'),
+            outerBorderStroke: getColor('--outer-border-stroke')
+        };
+        
+        const svg = d3.select("#visualization")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .style("background", "#1e1e1e") // bg-stone-900 equivalent
+            .style("border-radius", "8px");
+        
+        // Number of circles to create
+        const circleCount = 10;
+
+        // Create array of data for the circles
+        const circleData = Array.from({ length: circleCount }, (_, i) => ({
+            id: i,
+            x: width/2 + (Math.random() - 0.5) * 100,  // Random initial positions
+            y: height/2 + (Math.random() - 0.5) * 100,
+            radius: Math.random() * 20 + 20  // Random radius between 20 and 40
+        }));
+
+        // Create the force simulation
+        const simulation = d3.forceSimulation(circleData)
+            .force("charge", d3.forceManyBody().strength(30))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("collision", d3.forceCollide().radius(d => d.radius + 7)) // Use individual circle radius
+            .on("tick", ticked);
+
+        // Define drag behavior
+        const drag = d3.drag()
+            .on("start", dragStarted)
+            .on("drag", dragging)
+            .on("end", dragEnded);
+
+        // Create a group for each circle and its outer border
+        const circleGroups = svg.selectAll(".circle-group")
+            .data(circleData)
+            .join("g")
+            .attr("class", "circle-group")
+            .attr("transform", d => `translate(${d.x}, ${d.y})`)
+            .call(drag); // Apply drag to the group
+
+        // Add the outer border circles to each group
+        circleGroups.append("circle")
+            .attr("r", d => d.radius + 5)
+            .style("fill", colors.outerBorderFill)
+            .style("stroke", colors.outerBorderStroke)
+            .style("stroke-width", 4)
+            .style("opacity", 0.6)
+            .attr("class", d => "outer-border-" + d.id);
+
+        // Add the inner circles to each group
+        const circles = circleGroups.append("circle")
+            .attr("r", d => d.radius)
+            .style("fill", colors.circleFill)
+            .style("stroke", colors.circleStroke)
+            .style("stroke-width", 2)
+            .style("stroke-dasharray", "0");
+
+        // Drag functions
+        function dragStarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragging(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragEnded(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+
+        // Update circle positions on each tick of the simulation
+        // Configurable padding constant for collision boundaries
+        const boundaryPadding = 20;
+        
+        function ticked() {
+            // Apply boundary constraints
+            circleData.forEach(d => {
+                // Bounce off left and right edges with padding
+                if (d.x <= d.radius + boundaryPadding) {
+                    d.x = d.radius + boundaryPadding;
+                    d.vx *= -0.8; // Reverse velocity with some dampening
+                }
+                if (d.x >= width - (d.radius + boundaryPadding)) {
+                    d.x = width - (d.radius + boundaryPadding);
+                    d.vx *= -0.8;
+                }
+                
+                // Bounce off top and bottom edges with padding
+                if (d.y <= d.radius + boundaryPadding) {
+                    d.y = d.radius + boundaryPadding;
+                    d.vy *= -0.8;
+                }
+                if (d.y >= height - (d.radius + boundaryPadding)) {
+                    d.y = height - (d.radius + boundaryPadding);
+                    d.vy *= -0.8;
+                }
+            });
+            
+            // Update group positions
+            circleGroups.attr("transform", d => `translate(${d.x}, ${d.y})`);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart.js Bubble Chart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="min-h-screen bg-stone-800">
+    <div class="flex justify-center items-center h-screen">
+        <div class="w-3/4 h-3/4 bg-stone-900 rounded-lg p-6">
+            <canvas id="bubbleChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // Set up the bubble chart
+        const ctx = document.getElementById('bubbleChart').getContext('2d');
+        
+        // Create random data for the bubble chart
+        const generateData = (count, prefix) => {
+            const data = [];
+            for (let i = 0; i < count; i++) {
+                data.push({
+                    x: Math.random() * 100,
+                    y: Math.random() * 100,
+                    r: Math.random() * 20 + 5, // Radius between 5 and 25
+                    name: `${prefix}-${i+1}` // Unique name for each data point
+                });
+            }
+            return data;
+        };
+        
+        // Create the bubble chart
+        const bubbleChart = new Chart(ctx, {
+            type: 'bubble',
+            data: {
+                datasets: [
+                    {
+                        label: 'Dataset 1',
+                        data: generateData(15, 'Alpha'),
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Dataset 2',
+                        data: generateData(10, 'Beta'),
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Dataset 3',
+                        data: generateData(8, 'Gamma'),
+                        backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Bubble Chart Example',
+                        color: '#e7e5e4',
+                        font: {
+                            size: 18
+                        }
+                    },
+                    legend: {
+                        labels: {
+                            color: '#e7e5e4'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const point = context.raw;
+                                return `${point.name}: (${point.x.toFixed(2)}, ${point.y.toFixed(2)})`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#e7e5e4'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#e7e5e4'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
