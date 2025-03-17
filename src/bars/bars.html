@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bars Example</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .bar {
+            fill: #5d5d5d;
+            transition: fill 0.3s;
+        }
+        .bar:hover {
+            fill: #909090;
+        }
+        .sort-btn {
+            background-color: #3d3d3d;
+            color: #e0e0e0;
+            padding: 8px 16px;
+            margin: 0 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .sort-btn:hover {
+            background-color: #505050;
+        }
+        .sort-btn.active {
+            background-color: #606060;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-800 font-mono flex flex-col justify-center items-center">
+    <h1 class="text-3xl font-bold text-stone-300 mb-6">SWE-Bench</h1>
+    <div class="mb-4 flex">
+        <button id="sort-name-asc" class="sort-btn">Sort by Name (A-Z)</button>
+        <button id="sort-name-desc" class="sort-btn">Sort by Name (Z-A)</button>
+        <button id="sort-value-asc" class="sort-btn">Sort by Value (Low-High)</button>
+        <button id="sort-value-desc" class="sort-btn">Sort by Value (High-Low)</button>
+    </div>
+    <div id="chart"></div>
+    <script>
+        // Sample data array - can be modified to have any number of items
+        const data = [
+            { value: 8, name: "Alpha" },
+            { value: 20, name: "Beta" },
+            { value: 5, name: "Gamma" },
+            { value: 10, name: "Delta" },
+            { value: 8, name: "Epsilon" }
+        ];
+        
+        // Set dimensions and margins
+        const margin = {top: 40, right: 10, bottom: 60, left: 10};
+        const width = 650 - margin.left - margin.right;
+        const height = 450 - margin.top - margin.bottom;
+        
+        // Create SVG element
+        const svg = d3.select("#chart")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+        
+        // Create scales
+        const x = d3.scaleBand()
+            .range([0, width])
+            .padding(0.1)
+            .paddingInner(0.3);
+        
+        const y = d3.scaleLinear()
+            .range([height, 0]);
+        
+        // Function to update the chart
+        function updateChart(sortedData) {
+            // Update domains with sorted data
+            x.domain(sortedData.map((d, i) => i));
+            y.domain([0, d3.max(sortedData, d => d.value)]).nice();
+            
+            // Select all bars and bind data
+            const bars = svg.selectAll(".bar")
+                .data(sortedData, d => d.name);
+            
+            // Update existing bars
+            bars
+                .transition()
+                .duration(750)
+                .attr("x", (d, i) => x(i))
+                .attr("y", d => y(d.value))
+                .attr("height", d => height - y(d.value));
+            
+            // Enter new bars
+            bars.enter()
+                .append("rect")
+                .attr("class", "bar")
+                .attr("x", (d, i) => x(i))
+                .attr("y", d => y(d.value))
+                .attr("width", x.bandwidth())
+                .attr("height", d => height - y(d.value))
+                .attr("stroke", "white")
+                .attr("stroke-width", 2)
+                .append("title")
+                .text(d => `${d.name}: ${d.value}`);
+            
+            // Remove old bars
+            bars.exit().remove();
+            
+            // Update value labels
+            const valueLabels = svg.selectAll(".tick-label")
+                .data(sortedData, d => d.name);
+                
+            valueLabels
+                .transition()
+                .duration(750)
+                .attr("x", (d, i) => x(i) + x.bandwidth() / 2)
+                .attr("y", d => y(d.value) - 10)
+                .text(d => d.value);
+                
+            valueLabels.enter()
+                .append("text")
+                .attr("class", "tick-label")
+                .attr("x", (d, i) => x(i) + x.bandwidth() / 2)
+                .attr("y", d => y(d.value) - 10)
+                .attr("text-anchor", "middle")
+                .attr("fill", "white")
+                .attr("font-size", "18px")
+                .text(d => d.value);
+                
+            valueLabels.exit().remove();
+            
+            // Update bar labels
+            const barLabels = svg.selectAll(".bar-label")
+                .data(sortedData, d => d.name);
+                
+            barLabels
+                .transition()
+                .duration(750)
+                .attr("x", (d, i) => x(i) + x.bandwidth() / 2 - 14)
+                .attr("transform", (d, i) => `rotate(-35, ${x(i) + x.bandwidth() / 2}, ${height + 20})`)
+                .text(d => d.name);
+                
+            const barLabelsEnter = barLabels.enter()
+                .append("text")
+                .attr("class", "bar-label fill-stone-400 font-mono")
+                .attr("x", (d, i) => x(i) + x.bandwidth() / 2 - 14)
+                .attr("y", height + 35)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "18px")
+                .attr("transform", (d, i) => `rotate(-35, ${x(i) + x.bandwidth() / 2}, ${height + 20})`)
+                .text(d => d.name);
+                
+            barLabels.exit().remove();
+        }
+        
+        // Initial chart render
+        updateChart(data);
+        
+        // Sort button event handlers
+        document.getElementById("sort-name-asc").addEventListener("click", function() {
+            setActiveButton(this);
+            const sortedData = [...data].sort((a, b) => a.name.localeCompare(b.name));
+            updateChart(sortedData);
+        });
+        
+        document.getElementById("sort-name-desc").addEventListener("click", function() {
+            setActiveButton(this);
+            const sortedData = [...data].sort((a, b) => b.name.localeCompare(a.name));
+            updateChart(sortedData);
+        });
+        
+        document.getElementById("sort-value-asc").addEventListener("click", function() {
+            setActiveButton(this);
+            const sortedData = [...data].sort((a, b) => a.value - b.value);
+            updateChart(sortedData);
+        });
+        
+        document.getElementById("sort-value-desc").addEventListener("click", function() {
+            setActiveButton(this);
+            const sortedData = [...data].sort((a, b) => b.value - a.value);
+            updateChart(sortedData);
+        });
+        
+        // Helper function to set active button
+        function setActiveButton(activeButton) {
+            document.querySelectorAll('.sort-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            activeButton.classList.add('active');
+        }
+
+    </script>
+</body>
+</html>
