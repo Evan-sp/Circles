@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Square Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body class="flex justify-center items-center min-h-screen bg-gray-800">
+    <div id="square-container" class="bg-gray-800 p-4 rounded-lg"></div>
+    <script>
+        // Set dimensions
+        const width = 400;
+        const height = 400;
+        
+        // Create SVG element
+        const svg = d3.select("#square-container")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+        
+        // Create a square
+        const square = svg.append("rect")
+            .attr("x", width / 2 - 30)  // Center a 60x60 square
+            .attr("y", height / 2 - 30)
+            .attr("width", 60)         // Set fixed size
+            .attr("height", 60)
+            .attr("fill", "#374151")    // Dark gray fill
+            .attr("stroke", "#9ca3af")  // Light gray border
+            .attr("stroke-width", 3)
+            .style("cursor", "pointer"); // Add pointer cursor to indicate clickability
+            
+        // Set up rotation simulation
+        const centerX = width / 2;
+        const centerY = height / 2;
+        
+        // Create a node for the force simulation
+        const node = {
+            x: centerX, 
+            y: centerY, 
+            angle: 0
+        };
+
+        // Create a simple force simulation
+        const simulation = d3.forceSimulation([node])
+            .alphaDecay(0.01)  // Add a small alpha decay to gradually slow down
+            .force("rotate", () => {
+                // Rotation speed depends on the simulation's alpha value
+                // As alpha decreases, rotation slows down
+                node.angle = (node.angle + 0.04 * simulation.alpha()) % (2 * Math.PI);
+            })
+            .on("tick", () => {
+                // Apply rotation on each tick
+                square.attr("transform", `rotate(${node.angle * (180/Math.PI)}, ${centerX}, ${centerY})`);
+            });
+            
+        // Add click handler to reset alpha
+        square.on("click", () => {
+            // Reset alpha to 1 (full speed)
+            simulation.alpha(1).restart();
+        });
+    </script>
+</body>
+</html>
