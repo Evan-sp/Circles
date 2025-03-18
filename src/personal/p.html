@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Empty Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-white">
+    <div class="container flex items-center justify-center flex-wrap">
+       <p id="aboutBtn" class="text-2xl font-bold text-gray-500 hover:text-gray-700 hover:-rotate-6 cursor-pointer mx-6 transition-all duration-500">About</p> 
+       <p class="text-2xl font-bold text-gray-500 hover:text-gray-700 cursor-pointer mx-6 transition-all duration-500">Projects</p> 
+       <p class="text-2xl font-bold text-gray-500 hover:text-gray-700 hover:rotate-6 cursor-pointer mx-6 transition-all duration-500">Writings</p> 
+
+        <div id="contentContainer" class="hidden w-full mt-8 flex flex-col items-center">
+            <p id="aboutContent" class="text-2xl font-light text-gray-500 transition-all duration-500 mb-6">
+                Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.
+                Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.
+            </p>
+            <button id="backBtn" class="mt-4 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md transition-all duration-300">
+                Back
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('aboutBtn').addEventListener('click', function() {
+            // Fade out navigation items
+            const navItems = document.querySelectorAll('.container > p:not(#aboutContent)');
+            navItems.forEach(p => {
+                p.style.opacity = '0';
+                p.style.transition = 'opacity 0.2s ease-out';
+            });
+            
+            // Wait for the fade out to complete
+            setTimeout(() => {
+                // Hide all navigation items
+                navItems.forEach(p => {
+                    p.classList.add('hidden');
+                });
+                
+                // Show the content container with about content
+                const contentContainer = document.getElementById('contentContainer');
+                contentContainer.classList.remove('hidden');
+                contentContainer.style.opacity = '0';
+                
+                // Fade in the about content
+                setTimeout(() => {
+                    contentContainer.style.opacity = '1';
+                    contentContainer.style.transition = 'opacity 0.5s ease-in';
+                }, 100);
+            }, 200);
+        });
+        
+        // Back button functionality
+        document.getElementById('backBtn').addEventListener('click', function() {
+            // Fade out content
+            const contentContainer = document.getElementById('contentContainer');
+            contentContainer.style.opacity = '0';
+            contentContainer.style.transition = 'opacity 0.2s ease-out';
+            
+            // Wait for fade out to complete
+            setTimeout(() => {
+                // Hide content
+                contentContainer.classList.add('hidden');
+                
+                // Show navigation items but with opacity 0
+                const navItems = document.querySelectorAll('.container > p:not(#aboutContent)');
+                navItems.forEach(p => {
+                    p.classList.remove('hidden');
+                    p.style.opacity = '0';
+                    p.style.transition = 'opacity 0.5s ease-in';
+                });
+                
+                // Fade in navigation items
+                setTimeout(() => {
+                    navItems.forEach(p => {
+                        p.style.opacity = '1';
+                    });
+                }, 100);
+            }, 200);
+        });
+    </script>
+</body>
+</html>
