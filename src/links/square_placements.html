@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Square Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body class="flex justify-center items-center min-h-screen bg-gray-800">
+    <div id="square-container" class="bg-gray-800 p-4 rounded-lg"></div>
+    <script>
+        // Set dimensions
+        const width = 400;
+        const height = 400;
+        
+        // Create SVG element
+        const svg = d3.select("#square-container")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .style("cursor", "pointer")
+            .on("click", function(event) {
+                if (event.target === this) {
+                    addSquare(event);
+                }
+            });
+        
+        // Create groups for links and squares to control z-order
+        const linksGroup = svg.append("g").attr("class", "links");
+        const squaresGroup = svg.append("g").attr("class", "squares");
+        
+        // Square properties
+        const squareSize = 40;
+        const padding = 40; // Padding from edges
+        
+        // Create data array for squares with random positions
+        const squaresData = [
+            {
+                id: 1,
+                x: Math.random() * (width - squareSize - padding * 2) + padding,
+                y: Math.random() * (height - squareSize - padding * 2) + padding,
+                width: squareSize,
+                height: squareSize,
+                fill: "#374151",
+                stroke: "#9ca3af",
+                strokeWidth: 3
+            },
+            {
+                id: 2,
+                x: Math.random() * (width - squareSize - padding * 2) + padding,
+                y: Math.random() * (height - squareSize - padding * 2) + padding,
+                width: squareSize,
+                height: squareSize,
+                fill: "#374151",
+                stroke: "#9ca3af",
+                strokeWidth: 3
+            },
+            {
+                id: 3,
+                x: Math.random() * (width - squareSize - padding * 2) + padding,
+                y: Math.random() * (height - squareSize - padding * 2) + padding,
+                width: squareSize,
+                height: squareSize,
+                fill: "#374151",
+                stroke: "#9ca3af",
+                strokeWidth: 3
+            }
+        ];
+        
+        // Generate all possible pairs of squares for links
+        let linkPairs = [];
+        updateLinkPairs();
+        
+        function updateLinkPairs() {
+            linkPairs = [];
+            for (let i = 0; i < squaresData.length; i++) {
+                for (let j = i + 1; j < squaresData.length; j++) {
+                    linkPairs.push({source: i, target: j});
+                }
+            }
+        }
+        
+        // Create force simulation
+        let simulation = d3.forceSimulation(squaresData)
+            .force("link", d3.forceLink(linkPairs).distance(100))
+            .force("charge", d3.forceManyBody().strength(-100))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("collision", d3.forceCollide().radius(squareSize))
+            .force("x", d3.forceX(width / 2).strength(0.05))
+            .force("y", d3.forceY(height / 2).strength(0.05));
+        
+        // Create links for each pair
+        let links = linksGroup.selectAll("line")
+            .data(linkPairs)
+            .enter()
+            .append("line")
+            .attr("stroke", "#9ca3af")
+            .attr("stroke-width", 3);
+        
+        // Create squares from data
+        let squares = squaresGroup.selectAll("rect")
+            .data(squaresData)
+            .enter()
+            .append("rect")
+            .attr("width", squareSize)
+            .attr("height", squareSize)
+            .attr("fill", "#374151")
+            .attr("stroke", "#9ca3af")
+            .attr("stroke-width", 3)
+            .style("cursor", "pointer")
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+        
+        // Function to add a new square
+        function addSquare(event) {
+            const coordinates = d3.pointer(event);
+            const newSquare = {
+                id: squaresData.length + 1,
+                x: coordinates[0] - squareSize / 2,
+                y: coordinates[1] - squareSize / 2,
+                width: squareSize,
+                height: squareSize,
+                fill: "#374151",
+                stroke: "#9ca3af",
+                strokeWidth: 3
+            };
+            
+            squaresData.push(newSquare);
+            // Don't update link pairs
+            
+            // Update simulation with new data but keep existing links
+            simulation.stop();
+            simulation = d3.forceSimulation(squaresData)
+                .force("link", d3.forceLink(linkPairs).distance(100))
+                .force("charge", d3.forceManyBody().strength(-100))
+                .force("center", d3.forceCenter(width / 2, height / 2))
+                .force("collision", d3.forceCollide().radius(squareSize))
+                .force("x", d3.forceX(width / 2).strength(0.05))
+                .force("y", d3.forceY(height / 2).strength(0.05));
+            
+            // Recreate the squares without modifying links
+            squaresGroup.selectAll("rect").remove();
+            squares = squaresGroup.selectAll("rect")
+                .data(squaresData)
+                .enter()
+                .append("rect")
+                .attr("width", squareSize)
+                .attr("height", squareSize)
+                .attr("fill", "#374151")
+                .attr("stroke", "#9ca3af")
+                .attr("stroke-width", 3)
+                .style("cursor", "pointer")
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
+            
+            // Update positions on each tick of the simulation
+            simulation.on("tick", () => {
+                links
+                    .attr("x1", d => d.source.x + squareSize / 2)
+                    .attr("y1", d => d.source.y + squareSize / 2)
+                    .attr("x2", d => d.target.x + squareSize / 2)
+                    .attr("y2", d => d.target.y + squareSize / 2);
+                
+                squares
+                    .attr("x", d => d.x)
+                    .attr("y", d => d.y);
+            });
+        }
+        
+        // Update positions on each tick of the simulation
+        simulation.on("tick", () => {
+            links
+                .attr("x1", d => d.source.x + squareSize / 2)
+                .attr("y1", d => d.source.y + squareSize / 2)
+                .attr("x2", d => d.target.x + squareSize / 2)
+                .attr("y2", d => d.target.y + squareSize / 2);
+            
+            squares
+                .attr("x", d => d.x)
+                .attr("y", d => d.y);
+        });
+        
+        // Variables to keep track of link drawing
+        let isShiftPressed = false;
+        let isDrawingLink = false;
+        let linkSource = null;
+        let tempLink = null;
+        
+        // Add event listeners for keydown and keyup
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Shift') {
+                isShiftPressed = true;
+                svg.style("cursor", "crosshair");
+            }
+        });
+        
+        document.addEventListener('keyup', function(event) {
+            if (event.key === 'Shift') {
+                isShiftPressed = false;
+                svg.style("cursor", "pointer");
+                if (isDrawingLink && tempLink) {
+                    tempLink.remove();
+                    tempLink = null;
+                }
+                isDrawingLink = false;
+                linkSource = null;
+            }
+        });
+        
+        // Drag functions
+        function dragstarted(event, d) {
+            if (isShiftPressed) {
+                event.sourceEvent.stopPropagation();
+                linkSource = d;
+                isDrawingLink = true;
+                
+                // Create temporary line for visual feedback while dragging
+                tempLink = linksGroup.append("line")
+                    .attr("x1", d.x + squareSize / 2)
+                    .attr("y1", d.y + squareSize / 2)
+                    .attr("x2", d.x + squareSize / 2)
+                    .attr("y2", d.y + squareSize / 2)
+                    .attr("stroke", "#9ca3af")
+                    .attr("stroke-width", 3)
+                    .attr("stroke-dasharray", "5,5");
+            } else {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+        }
+        
+        function dragged(event, d) {
+            if (isShiftPressed && isDrawingLink && tempLink) {
+                // Update the temporary line end position during drag
+                tempLink
+                    .attr("x2", event.x)
+                    .attr("y2", event.y);
+            } else {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+        }
+        
+        function dragended(event, d) {
+            if (isShiftPressed && isDrawingLink) {
+                // Find if we're dragging over another square
+                const targetSquare = findSquareAtPosition(event.x, event.y);
+                
+                if (targetSquare && targetSquare !== linkSource) {
+                    // Create a new link between source and target squares
+                    const sourceIndex = squaresData.indexOf(linkSource);
+                    const targetIndex = squaresData.indexOf(targetSquare);
+                    
+                    // Check if this link already exists
+                    const linkExists = linkPairs.some(link => 
+                        (link.source === sourceIndex && link.target === targetIndex) || 
+                        (link.source === targetIndex && link.target === sourceIndex)
+                    );
+                    
+                    if (!linkExists) {
+                        linkPairs.push({
+                            source: sourceIndex,
+                            target: targetIndex
+                        });
+                        
+                        // Update the links
+                        linksGroup.selectAll("line").remove();
+                        links = linksGroup.selectAll("line")
+                            .data(linkPairs)
+                            .enter()
+                            .append("line")
+                            .attr("stroke", "#9ca3af")
+                            .attr("stroke-width", 3);
+                        
+                        // Update the simulation
+                        simulation.force("link", d3.forceLink(linkPairs).distance(100));
+                        simulation.alpha(0.3).restart();
+                    }
+                }
+                
+                // Remove temporary line
+                if (tempLink) {
+                    tempLink.remove();
+                    tempLink = null;
+                }
+                
+                isDrawingLink = false;
+                linkSource = null;
+            } else {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+        }
+        
+        // Helper function to find a square at a given position
+        function findSquareAtPosition(x, y) {
+            for (let square of squaresData) {
+                if (x >= square.x && x <= square.x + squareSize &&
+                    y >= square.y && y <= square.y + squareSize) {
+                    return square;
+                }
+            }
+            return null;
+        }
+    </script>
+</body>
+</html>

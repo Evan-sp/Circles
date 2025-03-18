@@ -15,9 +15,8 @@
             fill: #909090;
         }
         .sort-btn {
-            background-color: #3d3d3d;
             color: #e0e0e0;
-            padding: 8px 16px;
+            padding: 8px 8px;
             margin: 0 8px;
             border-radius: 4px;
             cursor: pointer;
@@ -31,15 +30,26 @@
         }
     </style>
 </head>
-<body class="min-h-screen bg-gray-800 font-mono flex flex-col justify-center items-center">
-    <h1 class="text-3xl font-bold text-stone-300 mb-6">SWE-Bench</h1>
-    <div class="mb-4 flex">
-        <button id="sort-name-asc" class="sort-btn">Sort by Name (A-Z)</button>
-        <button id="sort-name-desc" class="sort-btn">Sort by Name (Z-A)</button>
-        <button id="sort-value-asc" class="sort-btn">Sort by Value (Low-High)</button>
-        <button id="sort-value-desc" class="sort-btn">Sort by Value (High-Low)</button>
+<body class="min-h-screen flex flex-col p-8 items-center justify-center bg-gray-800 font-mono">
+    <div class="flex flex-row gap-4">
+        <div class="flex flex-col items-center w-[300px] p-2"> 
+            <h1 class="text-xl font-bold text-stone-300 mb-6">Model</h1>
+            <div class="border-2 border-gray-600 rounded-sm p-4 w-full"></div>
+        </div>
+        <div class="relative flex flex-col items-center p-2 w-[700px]">
+            <h1 class="text-xl font-bold text-stone-300 mb-6">SWE-Bench</h1>
+            <div class="border-2 border-gray-600 rounded-sm p-4 w-full">
+            <div class="relative mb-4 flex">
+                <p class="text-stone-300 mb-3 text-xs absolute -top-7 left-0">Design</p>
+                <button id="sort-name-asc" class="sort-btn bg-gray-700 text-xs">Sort by Name (A-Z)</button>
+                <button id="sort-name-desc" class="sort-btn bg-gray-700 text-xs">Sort by Name (Z-A)</button>
+                <button id="sort-value-asc" class="sort-btn bg-gray-700 text-xs">Sort by Value (Low-High)</button>
+                <button id="sort-value-desc" class="sort-btn bg-gray-700 text-xs">Sort by Value (High-Low)</button>
+            </div>
+            <div id="chart" class="w-full"></div>
+            </div>
+        </div>
     </div>
-    <div id="chart"></div>
     <script>
         // Sample data array - can be modified to have any number of items
         const data = [
@@ -47,36 +57,58 @@
             { value: 20, name: "Beta" },
             { value: 5, name: "Gamma" },
             { value: 10, name: "Delta" },
-            { value: 8, name: "Epsilon" }
+            { value: 8, name: "Epsilon" },
+            { value: 15, name: "Zeta" },
+            { value: 12, name: "Eta" },
+            { value: 18, name: "Theta" },
+            { value: 22, name: "Iota" },
+            { value: 25, name: "Kappa" },
+            { value: 30, name: "Lambda" },
+            
         ];
         
-        // Set dimensions and margins
+        // Set margins
         const margin = {top: 40, right: 10, bottom: 60, left: 10};
-        const width = 650 - margin.left - margin.right;
-        const height = 450 - margin.top - margin.bottom;
         
-        // Create SVG element
+        // Function to get container width
+        function getChartWidth() {
+            return document.getElementById('chart').getBoundingClientRect().width;
+        }
+        
+        // Set dimensions based on container size
+        let width = getChartWidth() - margin.left - margin.right;
+        let height = 450 - margin.top - margin.bottom;
+        
+        // Create scales
+        const x = d3.scaleBand()
+            .padding(0.1)
+            .paddingInner(0.3);
+        
+        const y = d3.scaleLinear();
+        
+        // Create SVG element with responsive width
         const svg = d3.select("#chart")
             .append("svg")
-            .attr("width", width + margin.left + margin.right)
+            .attr("width", "100%")
             .attr("height", height + margin.top + margin.bottom)
             .append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
         
-        // Create scales
-        const x = d3.scaleBand()
-            .range([0, width])
-            .padding(0.1)
-            .paddingInner(0.3);
-        
-        const y = d3.scaleLinear()
-            .range([height, 0]);
-        
         // Function to update the chart
         function updateChart(sortedData) {
-            // Update domains with sorted data
-            x.domain(sortedData.map((d, i) => i));
-            y.domain([0, d3.max(sortedData, d => d.value)]).nice();
+            // Update width based on container
+            width = getChartWidth() - margin.left - margin.right;
+            
+            // Update scales with new width
+            x.range([0, width])
+              .domain(sortedData.map((d, i) => i));
+            
+            y.range([height, 0])
+              .domain([0, d3.max(sortedData, d => d.value)]).nice();
+            
+            // Update SVG viewBox for better responsiveness
+            d3.select("#chart svg")
+                .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`);
             
             // Select all bars and bind data
             const bars = svg.selectAll(".bar")
@@ -155,6 +187,29 @@
         
         // Initial chart render
         updateChart(data);
+        
+        // Add window resize listener
+        window.addEventListener('resize', function() {
+            // Get currently sorted data
+            const activeButton = document.querySelector('.sort-btn.active');
+            let sortedData = [...data];
+            
+            if (activeButton) {
+                const buttonId = activeButton.id;
+                if (buttonId === 'sort-name-asc') {
+                    sortedData = [...data].sort((a, b) => a.name.localeCompare(b.name));
+                } else if (buttonId === 'sort-name-desc') {
+                    sortedData = [...data].sort((a, b) => b.name.localeCompare(a.name));
+                } else if (buttonId === 'sort-value-asc') {
+                    sortedData = [...data].sort((a, b) => a.value - b.value);
+                } else if (buttonId === 'sort-value-desc') {
+                    sortedData = [...data].sort((a, b) => b.value - a.value);
+                }
+            }
+            
+            // Redraw chart with updated dimensions
+            updateChart(sortedData);
+        });
         
         // Sort button event handlers
         document.getElementById("sort-name-asc").addEventListener("click", function() {
