@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Empty Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .bar {
+            transition: width 0.5s ease-in-out, opacity 0.3s ease-in-out;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center h-screen bg-neutral-800">
+    <div class="flex flex-col items-center justify-center border-2 border-neutral-700 rounded-2xl p-8">
+        <button id="change-bars" onclick="changeBars()" class="px-4 py-2 mb-4 bg-blue-500 text-white rounded mr-4 hover:bg-blue-600">Change Bars</button>
+        <div id="container-bars" class="flex justify-around items-end w-[40rem] h-[24rem] px-8 pt-8"></div> 
+    </div>
+   <script>
+        const barsContainer = document.querySelector('#container-bars');
+        var bars = 5;
+
+        function addBars() {
+            const containerWidth = barsContainer.offsetWidth;
+            const marginWidth = 30; 
+            const calculatedWidth = (containerWidth / bars) - marginWidth;
+            
+            for (let i = 0; i < bars; i++) {
+                const bar = document.createElement('div');
+                bar.classList.add('bar');
+                bar.style.width = `${calculatedWidth}px`;
+                bar.style.height = '300px';
+                bar.classList.add('bg-neutral-500');
+                bar.classList.add('rounded-t-lg');
+                bar.classList.add('border-2');
+                bar.classList.add('border-neutral-400');
+                bar.style.margin = '2px';
+                bar.style.opacity = '0'; // Start with opacity 0
+                barsContainer.appendChild(bar);
+                
+                // Trigger transition after a small delay
+                setTimeout(() => {
+                    bar.style.opacity = '1';
+                }, 10);
+            }
+        }
+
+        function changeBars() {
+            const oldBars = document.querySelectorAll('.bar');
+            const newBarCount = Math.floor(Math.random() * 12) + 2;
+            
+            // Fade out existing bars
+            oldBars.forEach(bar => {
+                bar.style.opacity = '0';
+            });
+            
+            // Wait for fade out to complete before creating new bars
+            setTimeout(() => {
+                clearBars();
+                bars = newBarCount;
+                addBars();
+            }, 300);
+        }
+
+        function clearBars() {
+            barsContainer.innerHTML = '';
+        }
+
+        addBars();
+   </script>
+</body>
+</html>

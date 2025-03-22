@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Empty Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex items-center justify-center h-screen bg-gray-100 text-xl font-light text-gray-500 p-24">
+    <div class="flex flex-col items-center justify-center border-2 shadow-sm bg-gray-200/40 shadow-neutral-300/50 border-neutral-300 rounded-2xl px-2 pt-4">
+        <button onclick="change()" class="mb-4 px-4 py-2 bg-gray-300/50 hover:bg-gray-300 rounded-lg transition-colors">Change</button>
+        <div class="flex items-center h-full">
+            <div id="chart-container" class="relative flex bg-gray-100 items-end w-full border-2 border-gray-200 rounded-lg rounded-b-none">
+                <canvas id="grid-background" class="absolute top-0 left-0 w-full h-full"></canvas>
+                <div id="container-bars" class="flex items-end h-[450px] z-10 relative">
+
+                
+                </div>
+            </div>
+        </div>
+        <div class="h-20 w-full shadow-neutral-300/50 border-neutral-300 rounded-b-lg">
+            
+        </div>
+    </div>
+    <script>
+        // Create and configure bars
+        let barData = [
+            { height: 150, label: 'One' },
+            { height: 300, label: 'Two' },
+            { height: 200, label: 'Three' },
+            { height: 400, label: 'Four' },
+            { height: 100, label: 'Five' },
+            { height: 200, label: 'Six' },
+            { height: 300, label: 'Seven' },
+            { height: 100, label: 'Eight' },
+            { height: 200, label: 'Nine' },
+        ];
+
+        const barsContainer = document.querySelector('#container-bars');
+        
+        barData.forEach((data, index) => {
+            const barIndex = index + 1;
+            
+            const bar = `
+                <div id="bar${barIndex}" class="relative w-8 bg-gray-500/30 mx-4 rounded-lg border-4 border-gray-500/3 transition-all duration-500">
+                    <p id="value${barIndex}" class="absolute -top-6 text-sm w-full text-center"></p>
+                    <div class="absolute w-3 h-3 bg-gray-300/80 -bottom-6 left-1/2 -translate-x-1/2 rounded-full"></div>
+                    <p id="label${barIndex}" class="absolute -bottom-14 w-full text-center rotate-12"></p>
+                </div>
+            `;
+            
+            barsContainer.innerHTML += bar;
+            
+            const barElement = document.querySelector(`#bar${barIndex}`);
+            const valueElement = document.querySelector(`#value${barIndex}`);
+            const labelElement = document.querySelector(`#label${barIndex}`);
+            
+            barElement.style.height = `${data.height}px`;
+            valueElement.textContent = data.height;
+            labelElement.textContent = data.label;
+        });
+
+        // Initialize grid background
+        function drawGrid() {
+            const canvas = document.getElementById('grid-background');
+            const chartContainer = document.getElementById('chart-container');
+            const containerWidth = chartContainer.offsetWidth;
+            const containerHeight = chartContainer.offsetHeight;
+            
+            canvas.width = containerWidth;
+            canvas.height = containerHeight;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, containerWidth, containerHeight);
+            
+            // Draw horizontal grid lines
+            const horizontalLineCount = 9; // 8 lines dividing into 9 sections
+            const horizontalSpacing = containerHeight / horizontalLineCount;
+            
+            ctx.strokeStyle = 'rgba(200, 200, 200, 0.3)';
+            ctx.lineWidth = 1;
+            
+            // Draw horizontal lines
+            for (let i = 1; i < horizontalLineCount; i++) {
+                const y = containerHeight - i * horizontalSpacing;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(containerWidth, y);
+                ctx.stroke();
+            }
+            
+            // Draw vertical grid lines (based on number of bars)
+            const barCount = barData.length;
+            const verticalSpacing = containerWidth / (barCount + 1);
+            
+            for (let i = 1; i <= barCount; i++) {
+                const x = i * verticalSpacing;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, containerHeight);
+                ctx.stroke();
+            }
+        }
+
+        function clearBars() {
+            // Get all bar elements
+            const allBars = document.querySelectorAll('[id^="bar"]');
+            
+            // Set height to 0 for all bars
+            allBars.forEach(bar => {
+                bar.style.height = '0px';
+            });
+        }
+
+        function changeHeight() {
+            barData.forEach((data, index) => {
+                data.height = Math.random() * 290 + 10;
+            });
+            // Update the height of each bar with the new values
+            barData.forEach((data, index) => {
+                const barIndex = index + 1;
+                const barElement = document.querySelector(`#bar${barIndex}`);
+                const valueElement = document.querySelector(`#value${barIndex}`);
+                
+                // Set the new height
+                barElement.style.height = `${data.height}px`;
+                
+                // Update the displayed value
+                valueElement.textContent = Math.round(data.height);
+            });
+            // Redraw the grid after changing heights
+            drawGrid();
+        }
+
+        function change() {
+            // Remove the clearBars step and directly change heights for smooth transition
+            changeHeight();
+        }
+
+        // Initial grid draw
+        window.addEventListener('load', drawGrid);
+        // Redraw grid on window resize
+        window.addEventListener('resize', drawGrid);
+    </script>
+</body>
+</html>

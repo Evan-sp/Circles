@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Empty Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex items-center justify-center h-screen bg-slate-700 text-xl font-light text-gray-300 p-24">
+        <button onclick="change()" class="self-start mr-8">Change</button>
+        <div class="relative flex flex-col justify-center items-center h-full">
+            <h1 id="chart-title" class="mb-8 absolute top-0  transition-all duration-500">Bar Chart</h1>
+            <div id="container-bars" class="flex items-end h-[350px]">
+            </div>
+        </div>
+    <script>
+        // Create and configure bars
+        let barData = [
+            { height: 150, label: 'One' },
+            { height: 300, label: 'Two' },
+            { height: 200, label: 'Three' },
+            { height: 200, label: 'Four' },
+            { height: 100, label: 'Five' },
+            { height: 250, label: 'Six' },
+            { height: 250, label: 'Seven' },
+            { height: 120, label: 'Eight' },
+            { height: 280, label: 'Nine' },
+            { height: 180, label: 'Ten' }
+        ];
+
+        const barsContainer = document.querySelector('#container-bars');
+        
+        barData.forEach((data, index) => {
+            const barIndex = index + 1;
+            
+            const bar = `
+                <div id="bar${barIndex}" class="relative w-8 bg-gray-300/40 mx-4 rounded-lg border-4 border-gray-800/70 transition-all duration-500">
+                    <p id="value${barIndex}" class="absolute -top-6 text-sm w-full text-center"></p>
+                    <div class="absolute w-3 h-3 bg-gray-600/80 -bottom-6 left-1/2 -translate-x-1/2 rounded-full"></div>
+                    <p id="label${barIndex}" class="absolute -bottom-14 w-full text-center rotate-12"></p>
+                </div>
+            `;
+
+            barsContainer.innerHTML += bar;
+            
+            const barElement = document.querySelector(`#bar${barIndex}`);
+            const valueElement = document.querySelector(`#value${barIndex}`);
+            const labelElement = document.querySelector(`#label${barIndex}`);
+            
+            barElement.style.height = `${data.height}px`;
+            valueElement.textContent = data.height;
+            labelElement.textContent = data.label;
+        });
+
+        function clearBars() {
+            // Get all bar elements
+            const allBars = document.querySelectorAll('[id^="bar"]');
+            
+            // Set height to 0 for all bars
+            allBars.forEach(bar => {
+                bar.style.height = '0px';
+            });
+        }
+
+        function changeHeight() {
+            barData.forEach((data, index) => {
+                data.height = Math.random() * 290 + 10;
+            });
+
+            // Update the height of each bar with the new values
+            barData.forEach((data, index) => {
+                const barIndex = index + 1;
+                const barElement = document.querySelector(`#bar${barIndex}`);
+                barElement.classList.remove("opacity-0")
+                const valueElement = document.querySelector(`#value${barIndex}`);
+                
+                // Set the new height
+                barElement.style.height = `${data.height}px`;
+                
+                // Update the displayed value
+                valueElement.textContent = Math.round(data.height);
+            });
+
+
+            const cutoff = Math.floor(Math.random() * 9 + 1);
+            for (let i = cutoff; i < barData.length; i++) {
+                barData[i].height = 0;
+                const barIndex = i + 1;
+                const bar = document.querySelector(`#bar${barIndex}`);
+                bar.classList.add("opacity-0")
+            }
+
+            // Reposition title based on visible bars
+            repositionTitle();
+        }
+
+        function repositionTitle() {
+            const title = document.getElementById('chart-title');
+            const visibleBars = Array.from(document.querySelectorAll('[id^="bar"]')).filter(bar => !bar.classList.contains('opacity-0'));
+            
+            if (visibleBars.length > 0) {
+                const firstBar = visibleBars[0];
+                const lastBar = visibleBars[visibleBars.length - 1];
+                const firstRect = firstBar.getBoundingClientRect();
+                const lastRect = lastBar.getBoundingClientRect();
+                
+                // Calculate center position between first and last visible bar
+                const centerX = firstRect.left + (lastRect.right - firstRect.left) / 2;
+                const containerRect = document.querySelector('#container-bars').getBoundingClientRect();
+                
+                // Position title relative to container
+                title.style.left = `${centerX - containerRect.left - (title.offsetWidth / 2)}px`;
+            } else {
+                // Reset if no bars are visible
+                title.style.left = '50%';
+                title.style.transform = 'translateX(-50%)';
+            }
+        }
+
+        function change() {
+            clearBars();
+            changeHeight();
+        }
+
+        // Initial positioning
+        window.addEventListener('load', repositionTitle);
+
+    </script>
+</body>
+</html>
